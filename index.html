@@ -1,0 +1,627 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080d18">
+
+    <title>SOS Guard | Personal Safety System</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Leaflet Map -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+
+    <!-- Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- HEADER -->
+    <header class="topbar">
+
+        <div class="brand">
+            <div class="brand-icon">S</div>
+
+            <div>
+                <h1>SOS <span>GUARD</span></h1>
+                <p>PERSONAL SAFETY SYSTEM</p>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <div class="connection-indicator">
+                <span class="status-dot"></span>
+                <span id="internetState">CHECKING</span>
+            </div>
+
+            <div class="clock" id="headerClock">--:--:--</div>
+        </div>
+
+    </header>
+
+
+    <!-- PAGE INTRO -->
+    <section class="page-heading">
+        <div>
+            <p class="eyebrow" id="pageEyebrow">SAFETY COMMAND CENTER</p>
+            <h2 id="pageTitle">Emergency Dashboard</h2>
+            <p id="pageSubtitle">
+                Monitor your safety status and manage emergency alerts.
+            </p>
+        </div>
+
+        <div class="system-badge" id="systemStatus">
+            SYSTEM INITIALIZING
+        </div>
+    </section>
+
+
+    <!-- GOOGLE LOGIN -->
+    <section class="login-card" id="loginSection">
+
+        <div class="login-symbol">🔐</div>
+
+        <div class="login-content">
+            <p class="eyebrow">SECURE ACCESS</p>
+            <h2>Sign in to SOS Guard</h2>
+
+            <p>
+                Sign in with your Google account to access your personal
+                safety dashboard.
+            </p>
+
+            <button
+                type="button"
+                class="google-button"
+                id="googleSignInButton"
+            >
+                <span class="google-g">G</span>
+                Continue with Google
+            </button>
+
+            <p id="loginMessage" class="login-message">
+                Please sign in to continue.
+            </p>
+        </div>
+
+    </section>
+
+
+    <!-- ACCOUNT INFORMATION -->
+    <section class="account-card hidden" id="accountSection">
+
+        <div class="account-left">
+            <div class="account-avatar">●</div>
+
+            <div>
+                <p class="eyebrow">SIGNED IN ACCOUNT</p>
+                <h3 id="loggedInUser">User</h3>
+                <p class="account-uid" id="loggedInUID">UID</p>
+            </div>
+        </div>
+
+        <div class="account-right">
+            <span id="authStatus">ACCOUNT CONNECTED</span>
+
+            <button
+                type="button"
+                class="outline-button"
+                id="googleSignOutButton"
+            >
+                Sign Out
+            </button>
+        </div>
+
+    </section>
+
+
+    <!-- USER DASHBOARD -->
+    <main id="userView">
+
+        <div class="dashboard-grid">
+
+            <!-- LEFT COLUMN -->
+            <div class="dashboard-column">
+
+                <!-- SOS CONTROL -->
+                <section class="panel sos-panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">EMERGENCY CONTROL</p>
+                            <h3>SOS Activation</h3>
+                        </div>
+
+                        <span class="live-label">
+                            <span class="status-dot red-dot"></span>
+                            CONTROL
+                        </span>
+                    </div>
+
+                    <div class="sos-control">
+
+                        <div class="sos-ring">
+                            <button
+                                type="button"
+                                id="sosButton"
+                                class="sos-button"
+                            >
+                                <span class="sos-button-text">SOS</span>
+                                <small>PRESS FOR HELP</small>
+                            </button>
+                        </div>
+
+                        <h3 id="alertState">SYSTEM STANDBY</h3>
+
+                        <p id="alertStatus">
+                            Emergency alert is currently inactive.
+                        </p>
+
+                    </div>
+
+                    <div class="sos-actions">
+
+                        <button
+                            type="button"
+                            id="silenceButton"
+                            class="secondary-button"
+                        >
+                            🔇 Silence Alarm
+                        </button>
+
+                        <button
+                            type="button"
+                            id="stopButton"
+                            class="danger-outline-button"
+                        >
+                            Stop SOS
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+                <!-- LOCATION INFORMATION -->
+                <section class="panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">GPS MONITORING</p>
+                            <h3>My Location</h3>
+                        </div>
+
+                        <span class="live-label">
+                            <span class="status-dot"></span>
+                            GPS
+                        </span>
+                    </div>
+
+                    <div class="location-status">
+                        <div>
+                            <p class="small-label">LOCATION STATUS</p>
+                            <h4 id="locationState">NOT REQUESTED</h4>
+                        </div>
+
+                        <div class="permission-chip" id="locationPermissionStatus">
+                            AWAITING PERMISSION
+                        </div>
+                    </div>
+
+                    <div class="coordinates-grid">
+
+                        <div class="coordinate-box">
+                            <span>LATITUDE</span>
+                            <strong id="latitude">--</strong>
+                        </div>
+
+                        <div class="coordinate-box">
+                            <span>LONGITUDE</span>
+                            <strong id="longitude">--</strong>
+                        </div>
+
+                        <div class="coordinate-box">
+                            <span>ACCURACY</span>
+                            <strong id="accuracy">--</strong>
+                        </div>
+
+                        <div class="coordinate-box">
+                            <span>LAST UPDATED</span>
+                            <strong id="lastUpdated">--</strong>
+                        </div>
+
+                    </div>
+
+                    <div class="tracking-status">
+                        <span id="trackingDot">●</span>
+                        <span id="trackingStatus">GPS NOT STARTED</span>
+                    </div>
+
+                    <a
+                        href="#"
+                        id="openMapLink"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-link"
+                    >
+                        Open location in map ↗
+                    </a>
+
+                </section>
+
+
+                <!-- EMERGENCY CONTACTS -->
+                <section class="panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">EMERGENCY NETWORK</p>
+                            <h3>Trusted Contacts</h3>
+                        </div>
+
+                        <span class="contact-count">02 CONTACTS</span>
+                    </div>
+
+                    <p class="panel-description">
+                        Save two emergency contacts for quick WhatsApp alerts.
+                    </p>
+
+                    <div class="contact-form">
+
+                        <div class="contact-block">
+                            <div class="contact-title">
+                                <span class="contact-number">01</span>
+                                <h4>Emergency Contact 1</h4>
+                            </div>
+
+                            <label for="contact1Name">Contact Name</label>
+                            <input
+                                type="text"
+                                id="contact1Name"
+                                placeholder="Enter contact name"
+                            >
+
+                            <label for="contact1Phone">Phone Number</label>
+                            <input
+                                type="tel"
+                                id="contact1Phone"
+                                placeholder="Enter number with country code"
+                            >
+
+                            <a
+                                href="#"
+                                id="whatsapp1"
+                                class="whatsapp-button"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Send WhatsApp Alert ↗
+                            </a>
+                        </div>
+
+
+                        <div class="contact-block">
+                            <div class="contact-title">
+                                <span class="contact-number">02</span>
+                                <h4>Emergency Contact 2</h4>
+                            </div>
+
+                            <label for="contact2Name">Contact Name</label>
+                            <input
+                                type="text"
+                                id="contact2Name"
+                                placeholder="Enter contact name"
+                            >
+
+                            <label for="contact2Phone">Phone Number</label>
+                            <input
+                                type="tel"
+                                id="contact2Phone"
+                                placeholder="Enter number with country code"
+                            >
+
+                            <a
+                                href="#"
+                                id="whatsapp2"
+                                class="whatsapp-button"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Send WhatsApp Alert ↗
+                            </a>
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        id="saveContacts"
+                        class="primary-button full-button"
+                    >
+                        Save Emergency Contacts
+                    </button>
+
+                    <p id="contactMessage" class="form-message"></p>
+
+                </section>
+
+            </div>
+
+
+            <!-- RIGHT COLUMN -->
+            <div class="dashboard-column">
+
+                <!-- LIVE MAP -->
+                <section class="panel map-panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">LIVE GPS FEED</p>
+                            <h3>Location Tracking</h3>
+                        </div>
+
+                        <span class="live-label">
+                            <span class="status-dot"></span>
+                            MAP
+                        </span>
+                    </div>
+
+                    <div id="userMap" class="map-container"></div>
+
+                    <div class="map-footer">
+                        <span>🚶 Your location marker</span>
+                        <span>OpenStreetMap</span>
+                    </div>
+
+                </section>
+
+
+                <!-- SYSTEM PERMISSIONS -->
+                <section class="panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">SYSTEM ACCESS</p>
+                            <h3>Permission Center</h3>
+                        </div>
+
+                        <span class="permission-icon">◈</span>
+                    </div>
+
+                    <div class="permission-list">
+
+                        <div class="permission-row">
+                            <div>
+                                <strong>GPS Location</strong>
+                                <small>Browser location permission</small>
+                            </div>
+
+                            <span id="locationPermissionStatus">
+                                NOT CHECKED
+                            </span>
+                        </div>
+
+                        <div class="permission-row">
+                            <div>
+                                <strong>Internet Connection</strong>
+                                <small>Network availability</small>
+                            </div>
+
+                            <span id="internetPermissionStatus">
+                                CHECKING
+                            </span>
+                        </div>
+
+                        <div class="permission-row">
+                            <div>
+                                <strong>Firebase Cloud</strong>
+                                <small>Database connection</small>
+                            </div>
+
+                            <span id="cloudPermissionStatus">
+                                NOT CONNECTED
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        id="permissionButton"
+                        class="secondary-button full-button"
+                    >
+                        Check Location Permission
+                    </button>
+
+                </section>
+
+
+                <!-- CLOUD STATUS -->
+                <section class="panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">BACKEND CONNECTION</p>
+                            <h3>Cloud Status</h3>
+                        </div>
+                    </div>
+
+                    <div class="cloud-status">
+                        <span class="cloud-icon">☁</span>
+
+                        <div>
+                            <strong id="cloudState">NOT CONNECTED</strong>
+                            <p>Firebase Realtime Database</p>
+                        </div>
+                    </div>
+
+                </section>
+
+
+                <!-- LIVE SHARE -->
+                <section class="panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">LOCATION SHARING</p>
+                            <h3>Tracking Link</h3>
+                        </div>
+                    </div>
+
+                    <p class="panel-description">
+                        Copy the link to share your tracking page with a trusted person.
+                    </p>
+
+                    <input
+                        type="text"
+                        id="shareLink"
+                        class="share-input"
+                        placeholder="Tracking link will appear here"
+                        readonly
+                    >
+
+                    <button
+                        type="button"
+                        id="copyLinkButton"
+                        class="primary-button full-button"
+                    >
+                        Copy Tracking Link
+                    </button>
+
+                    <p id="shareHelp" class="form-message"></p>
+                    <p id="shareLinkStatus" class="form-message"></p>
+
+                </section>
+
+
+                <!-- ACTIVITY LOG -->
+                <section class="panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">SYSTEM RECORDS</p>
+                            <h3>Activity Log</h3>
+                        </div>
+
+                        <button
+                            type="button"
+                            id="clearLog"
+                            class="clear-button"
+                        >
+                            Clear
+                        </button>
+                    </div>
+
+                    <div id="activityLog" class="activity-log">
+                        <p class="empty-log">
+                            Waiting for system activity...
+                        </p>
+                    </div>
+
+                </section>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- VIEWER PAGE -->
+    <main id="viewerView" class="hidden">
+
+        <section class="panel viewer-panel">
+
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">REMOTE LOCATION MONITOR</p>
+                    <h3>Shared SOS Location</h3>
+                </div>
+
+                <span class="live-label">
+                    <span class="status-dot red-dot"></span>
+                    LIVE
+                </span>
+            </div>
+
+            <div class="viewer-alert">
+                <h2 id="viewerState">CONNECTING</h2>
+                <p id="viewerMessage">
+                    Waiting for location updates...
+                </p>
+            </div>
+
+            <div id="viewerMap" class="map-container viewer-map"></div>
+
+            <div class="coordinates-grid">
+
+                <div class="coordinate-box">
+                    <span>LATITUDE</span>
+                    <strong id="viewerLatitude">--</strong>
+                </div>
+
+                <div class="coordinate-box">
+                    <span>LONGITUDE</span>
+                    <strong id="viewerLongitude">--</strong>
+                </div>
+
+                <div class="coordinate-box">
+                    <span>ACCURACY</span>
+                    <strong id="viewerAccuracy">--</strong>
+                </div>
+
+                <div class="coordinate-box">
+                    <span>LAST UPDATED</span>
+                    <strong id="viewerLastUpdated">--</strong>
+                </div>
+
+            </div>
+
+            <div class="tracking-status">
+                <span class="status-dot"></span>
+                <span id="viewerTrackingStatus">WAITING</span>
+            </div>
+
+            <a
+                href="#"
+                id="viewerOpenMap"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-link"
+            >
+                Open location in map ↗
+            </a>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>SOS GUARD <span>•</span> PERSONAL SAFETY SYSTEM</p>
+        <small>
+            Prototype only. Do not rely on this application as your sole
+            emergency safety method.
+        </small>
+    </footer>
+
+</div>
+
+</body>
+</html>
